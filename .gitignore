@@ -1,0 +1,66 @@
+# Ambientes Virtuais
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Bytecode e Cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribuição e Build
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# Testes e Cobertura
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+
+# Linters e Type Checkers
+.mypy_cache/
+.ruff_cache/
+.pytype/
+
+# Playwright
+.playwright/
+playwright-report/
+test-results/
+
+# Variáveis de Ambiente e Segredos
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# IDEs e Editores
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# Arquivos de Sistema Operacional
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Logs e Temporários
+*.log
+*.tmp
+*.bak
