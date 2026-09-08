@@ -18,9 +18,9 @@ async def fetch_page(
         browser = await p.chromium.launch(headless=headless)
         page = await browser.new_page()
 
-        # Bloqueio total de imagens e mídias para carregamento rápido e sem ruído
+        # Bloqueio total de imagens, mídias e fontes para carregamento rápido e sem ruído
         await page.route(
-            "**/*.{png,jpg,jpeg,webp,gif,svg,ico,bmp,tiff}",
+            "**/*.{png,jpg,jpeg,webp,gif,svg,ico,bmp,tiff,woff,woff2,ttf,otf,eot,mp4,webm,mp3,wav,ogg}",
             lambda route: route.abort(),
         )
 

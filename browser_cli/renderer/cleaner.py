@@ -1,3 +1,5 @@
+import re
+import bs4
 from bs4 import BeautifulSoup, Tag
 
 
@@ -83,6 +85,13 @@ def strip_noise(soup: BeautifulSoup) -> None:
 
     for noisy in soup.find_all(is_noise):
         noisy.decompose()
+
+    # 3. Remover marcadores de streaming SSR de frameworks (ex: React 18/Next.js/Wix "$" e "/$")
+    for s in soup.find_all(string=True):
+        if isinstance(s, bs4.NavigableString) and not isinstance(s, bs4.Comment):
+            val = str(s).strip()
+            if val and re.fullmatch(r"[/$\s]+", val):
+                s.extract()
 
 
 def extract_reader_body(soup: BeautifulSoup) -> Tag:

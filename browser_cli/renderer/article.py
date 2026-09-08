@@ -12,49 +12,32 @@ from browser_cli.renderer.lists import render_list
 from browser_cli.renderer.tables import render_table
 
 
+LEAF_BLOCK_TAGS = {
+    "h1", "h2", "h3", "h4", "h5", "h6",
+    "p", "pre", "ul", "ol", "dl", "blockquote",
+    "table", "hr",
+}
+
+CONTAINER_TAGS = {
+    "div", "section", "article", "main", "aside",
+    "details", "summary", "header", "figure", "fieldset",
+}
+
+
 def render_article_content(body: Tag, console: Console, base_url: str = "", page_title: str = "") -> None:
     """
     Renderiza o conteúdo do artigo com hierarquia tipográfica de modo leitura,
-    percorrendo blocos top-down e impedindo duplicações de nós aninhados.
+    percorrendo a árvore DOM de forma linear O(N) e modular.
     """
-    block_tags = {
-        "h1", "h2", "h3", "h4", "h5", "h6",
-        "p", "pre", "ul", "ol", "dl", "blockquote",
-        "table", "hr", "div", "section"
-    }
-
-    all_blocks = body.find_all(lambda tag: tag.name in block_tags)
-    processed_blocks: set[Tag] = set()
-
     clean_page_title = re.sub(r"\s+", " ", page_title).strip().lower()
 
-    for el in all_blocks:
-        # Se algum ancestral de bloco já foi processado, pula para evitar duplicação!
-        if any(parent in processed_blocks for parent in el.parents):
-            continue
-
-        name = el.name
-
-        # Suporte a <div> ou <section> que atuam como parágrafos diretos (sem outros blocos filhos)
-        if name in ["div", "section"]:
-            child_blocks = el.find_all(lambda t: t.name in (block_tags - {"div", "section"}))
-            if not child_blocks:
-                processed_blocks.add(el)
-                p_text = format_inline(el, base_url)
-                if p_text.plain.strip() and len(p_text.plain.strip()) > 15:
-                    console.print(p_text)
-                    console.print()
-            continue
-
-        processed_blocks.add(el)
-
+    def render_leaf(el: Tag, name: str) -> None:
         if name == "hr":
             console.print(Rule(style="dim cyan"))
             console.print()
 
         elif name == "h1":
             title = re.sub(r"\s+", " ", el.get_text(strip=True))
-            # Evita duplicar se o título for idêntico ao já impresso no painel do topo
             if title and (not clean_page_title or title.lower() not in clean_page_title):
                 console.print(Rule(f" {title} ", style="bold bright_cyan"))
                 console.print()
@@ -117,3 +100,34 @@ def render_article_content(body: Tag, console: Console, base_url: str = "", page
 
         elif name == "table":
             render_table(el, console)
+
+    def walk(node: Tag) -> None:
+        for child in node.children:
+            if not isinstance(child, Tag):
+                continue
+
+            name = child.name
+
+            # Se for um bloco atômico/folha conhecido, renderiza e não entra nos filhos
+            if name in LEAF_BLOCK_TAGS:
+                render_leaf(child, name)
+                continue
+
+            # Se for contêiner ou elemento estrutural
+            has_leaf = child.find(lambda t: t.name in LEAF_BLOCK_TAGS)
+            if not has_leaf:
+                # Sem blocos folha: verifica se há subcontêineres
+                has_subcontainer = child.find(lambda t: t.name in CONTAINER_TAGS)
+                if has_subcontainer:
+                    walk(child)
+                else:
+                    # Contêiner folha (ex: div que atua como parágrafo de texto)
+                    p_text = format_inline(child, base_url)
+                    text_str = p_text.plain.strip()
+                    if text_str and len(text_str) > 15:
+                        console.print(p_text)
+                        console.print()
+            else:
+                walk(child)
+
+    walk(body)
